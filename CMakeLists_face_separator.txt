@@ -1,0 +1,95 @@
+# CMakeLists.txt for OCCT Face Separator Example
+# OCCT 面分离器示例项目的CMake构建文件
+
+cmake_minimum_required(VERSION 3.16)
+project(FaceSeparator)
+
+# 设置C++标准
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 查找OCCT包
+find_package(OpenCASCADE REQUIRED)
+
+# 如果找到OCCT，设置包含目录
+if(OpenCASCADE_FOUND)
+    message(STATUS "OpenCASCADE found: version ${OpenCASCADE_VERSION}")
+    include_directories(${OpenCASCADE_INCLUDE_DIR})
+else()
+    message(FATAL_ERROR "OpenCASCADE not found. Please install OCCT.")
+endif()
+
+# 定义源文件
+set(SOURCES
+    face_separator_impl.cxx
+    face_separator_example.cxx
+)
+
+# 定义头文件
+set(HEADERS
+    face_separator.hxx
+)
+
+# 创建可执行文件
+add_executable(face_separator_example ${SOURCES} ${HEADERS})
+
+# 链接OCCT库
+target_link_libraries(face_separator_example ${OpenCASCADE_LIBRARIES})
+
+# 设置输出目录
+set_target_properties(face_separator_example PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
+# 添加编译选项
+if(MSVC)
+    target_compile_options(face_separator_example PRIVATE /W4)
+else()
+    target_compile_options(face_separator_example PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# 安装规则
+install(TARGETS face_separator_example
+    RUNTIME DESTINATION bin
+)
+
+install(FILES ${HEADERS}
+    DESTINATION include
+)
+
+# 添加一个完整的示例目标
+add_executable(face_separator_full face_separator.cxx)
+target_link_libraries(face_separator_full ${OpenCASCADE_LIBRARIES})
+
+set_target_properties(face_separator_full PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
+if(MSVC)
+    target_compile_options(face_separator_full PRIVATE /W4)
+else()
+    target_compile_options(face_separator_full PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+install(TARGETS face_separator_full
+    RUNTIME DESTINATION bin
+)
+
+# 打印构建信息
+message(STATUS "Configured OCCT Face Separator project")
+message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "OpenCASCADE include dirs: ${OpenCASCADE_INCLUDE_DIR}")
+message(STATUS "OpenCASCADE libraries: ${OpenCASCADE_LIBRARIES}")
+
+# 示例用法说明
+message(STATUS "")
+message(STATUS "Build instructions:")
+message(STATUS "  mkdir build && cd build")
+message(STATUS "  cmake ..")
+message(STATUS "  make (or cmake --build .)")
+message(STATUS "")
+message(STATUS "Run instructions:")
+message(STATUS "  ./bin/face_separator_example")
+message(STATUS "  ./bin/face_separator_full")
+message(STATUS "")
