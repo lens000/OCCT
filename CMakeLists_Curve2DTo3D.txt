@@ -1,0 +1,123 @@
+# CMake configuration for Curve2DTo3DConverter
+cmake_minimum_required(VERSION 3.12)
+
+# Define the Curve2DTo3DConverter library
+set(Curve2DTo3DConverter_SOURCES
+  src/ModelingData/Curve2DTo3DConverter.cxx
+)
+
+set(Curve2DTo3DConverter_HEADERS
+  src/ModelingData/Curve2DTo3DConverter.h
+)
+
+# Create the library
+add_library(Curve2DTo3DConverter SHARED
+  ${Curve2DTo3DConverter_SOURCES}
+  ${Curve2DTo3DConverter_HEADERS}
+)
+
+# Set target properties
+set_target_properties(Curve2DTo3DConverter PROPERTIES
+  VERSION ${OCCT_VERSION}
+  SOVERSION ${OCCT_VERSION_MAJOR}
+  CXX_STANDARD 14
+  CXX_STANDARD_REQUIRED ON
+)
+
+# Include directories
+target_include_directories(Curve2DTo3DConverter PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/ModelingData>
+  $<INSTALL_INTERFACE:include/occt>
+)
+
+# Link with required OCCT libraries
+target_link_libraries(Curve2DTo3DConverter PUBLIC
+  TKernel          # Standard types and basic utilities
+  TKMath           # Mathematical functions
+  TKG2d            # 2D geometry
+  TKG3d            # 3D geometry
+  TKGeomBase       # Base geometry classes
+  TKBRep           # Boundary representation
+)
+
+# Set compile definitions
+target_compile_definitions(Curve2DTo3DConverter PRIVATE
+  $<$<CONFIG:Debug>:_DEBUG>
+  $<$<CONFIG:Release>:NDEBUG>
+)
+
+# Platform-specific settings
+if(WIN32)
+  target_compile_definitions(Curve2DTo3DConverter PRIVATE
+    WIN32
+    _WINDOWS
+    UNICODE
+    _UNICODE
+  )
+endif()
+
+# Export symbols for shared library
+if(BUILD_SHARED_LIBS)
+  target_compile_definitions(Curve2DTo3DConverter PRIVATE
+    "Curve2DTo3DConverter_EXPORTS"
+  )
+endif()
+
+# Example executable
+if(BUILD_EXAMPLES)
+  add_executable(Curve2DTo3DExample
+    examples/Curve2DTo3DExample.cpp
+  )
+  
+  target_link_libraries(Curve2DTo3DExample PRIVATE
+    Curve2DTo3DConverter
+    TKernel
+    TKMath
+    TKG2d
+    TKG3d
+    TKGeomBase
+    TKBRep
+  )
+  
+  # Copy to output directory
+  set_target_properties(Curve2DTo3DExample PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+  )
+endif()
+
+# Installation rules
+install(TARGETS Curve2DTo3DConverter
+  EXPORT OCCTTargets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(FILES ${Curve2DTo3DConverter_HEADERS}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/occt
+)
+
+# Add to main OCCT targets if being included
+if(TARGET OCCT)
+  add_dependencies(OCCT Curve2DTo3DConverter)
+endif()
+
+# Testing (if enabled)
+if(BUILD_TESTING)
+  enable_testing()
+  
+  add_test(
+    NAME Curve2DTo3DConverter_BasicTest
+    COMMAND Curve2DTo3DExample
+  )
+  
+  set_tests_properties(Curve2DTo3DConverter_BasicTest PROPERTIES
+    TIMEOUT 30
+  )
+endif()
+
+# Documentation
+if(BUILD_DOC AND DOXYGEN_FOUND)
+  # Add to Doxygen documentation
+  set(DOXYGEN_INPUT ${DOXYGEN_INPUT} ${CMAKE_CURRENT_SOURCE_DIR}/src/ModelingData)
+endif()
