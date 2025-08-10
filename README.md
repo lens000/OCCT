@@ -1,64 +1,206 @@
-# Open CASCADE Technology
+# 二维前沿推进网格生成算法 (2D Advancing Front Mesh Generation)
 
-Open CASCADE Technology (OCCT) is a software development platform providing services for 3D surface and solid modeling, CAD data exchange, and visualization. Most of OCCT functionality is available in the form of C++ libraries. OCCT is ideal for developing software dealing with 3D modeling (CAD), manufacturing/measuring (CAM), or numerical simulation (CAE).
+本项目实现了一个用于二维平面的前沿推进（Advancing Front Approach）网格生成算法。该算法是一种广泛应用于有限元分析中的三角网格生成技术。
 
-## License
+## 算法原理
 
-Open CASCADE Technology is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License version 2.1 as published by the Free Software Foundation, with a special exception defined in the file `OCCT_LGPL_EXCEPTION.txt`. Consult the file `LICENSE_LGPL_21.txt` included in the OCCT distribution for the complete text of the license.
+前沿推进算法是一种增量式网格生成方法，其基本思想是：
 
-Alternatively, Open CASCADE Technology may be used under the terms of the Open CASCADE commercial license or a contractual agreement.
+1. **初始化**：从给定的边界创建初始前沿边（front edges）
+2. **迭代处理**：选择前沿边并在其上生成新的三角形
+3. **前沿更新**：更新前沿边列表，移除已处理的边，添加新生成的边
+4. **终止条件**：当所有前沿边都被处理完毕时，算法结束
 
-**Note:** Open CASCADE Technology is provided on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND. The entire risk related to any use of the OCCT code and materials is on you. See the license text for a formal disclaimer.
+## 项目结构
 
-## Packaging
+```
+.
+├── Point2D.h           # 二维点类
+├── Edge.h              # 前沿边类
+├── Triangle.h          # 三角形类
+├── AdvancingFront.h    # 核心算法类头文件
+├── AdvancingFront.cpp  # 核心算法实现
+├── main.cpp           # 演示程序
+├── CMakeLists.txt     # 构建配置
+└── README.md          # 项目说明
+```
 
-You can receive certified versions of OCCT code in different packages:
+## 核心类说明
 
-- **Snapshot of Git repository:** Contains C++ header and source files of OCCT, documentation sources, build scripts, and CMake project files.
-- **Complete source archive:** Contains all sources of OCCT, generated HTML and PDF documentation, and ready-to-use projects for building on all officially supported platforms.
-- **Binary package (platform-specific):** In addition to the complete source archive, it includes binaries of OCCT and third-party libraries built on one platform. This package allows using OCCT immediately after installation.
+### Point2D
+- 表示二维平面上的点
+- 提供基本的向量运算（加法、减法、点积、叉积）
+- 包含距离计算和单位化操作
 
-Certified versions of OCCT can be downloaded from:
-- [Open CASCADE Releases](https://dev.opencascade.org/release)
-- [GitHub Releases](https://github.com/Open-Cascade-SAS/OCCT/releases)
+### Edge
+- 表示前沿边
+- 包含两个端点和活跃状态
+- 提供边的几何属性计算（长度、中点、方向、法向量）
 
-You can also find OCCT pre-installed on your system or install it from packages provided by a third party. Note that packaging and functionality of such versions can be different from certified releases. Please consult the documentation accompanying your version for details.
+### Triangle
+- 表示生成的三角形
+- 提供面积、外心、外接圆等几何计算
+- 包含质量评估方法（最小角度等）
 
-## Documentation
+### AdvancingFront
+- 核心算法实现类
+- 管理点集、三角形集合和前沿边队列
+- 提供网格生成的主要逻辑
 
-Documentation is available at the following links:
-- [Latest version](https://dev.opencascade.org/doc/overview)
-- [Version 7.8](https://dev.opencascade.org/doc/occt-7.8.0/overview)
+## 主要特性
 
-Documentation can be part of the package. To preview documentation as part of the package, open the file `doc/html/index.html` to browse HTML documentation.
+- **自适应网格**：根据设定的网格尺寸生成合适的三角形
+- **质量控制**：通过角度阈值控制三角形质量
+- **边界适应**：支持任意多边形边界
+- **几何形状支持**：
+  - 矩形
+  - 圆形
+  - L形
+  - 自定义多边形
 
-If HTML documentation is not available in your package, you can:
+## 编译和运行
 
-- **Generate it from sources:** You need to have Tcl and Doxygen 1.8.4 (or above) installed on your system and accessible in your environment (check the environment variable PATH). Use the batch file `adm/gendoc.bat` on Windows or the Bash script `adm/gendoc` on Linux or OS X to (re)generate documentation.
-- **Generate together with sources:** You need to have CMake and 1.8.4 (or above) installed on your system. Enable `BUILD_DOC_Overview` CMake parameter and set the path to Doxygen `3RDPARTY_DOXYGEN_EXECUTABLE`. Then build ALL or only `Overview`.
-- **Read documentation in source plain text (Markdown) format** found in the subfolder `dox` or [GitHub Wiki](https://github.com/Open-Cascade-SAS/OCCT/wiki).
+### 系统要求
+- C++11 或更高版本
+- CMake 3.10 或更高版本
+- 支持 GCC、Clang 或 MSVC 编译器
 
-See [dox/build/build_documentation/building_documentation.md](dox/build/build_documentation/building_documentation.md) or [Building Documentation](https://dev.opencascade.org/doc/occt-7.8.0/overview/html/build_upgrade__building_documentation.html) for details.
+### 使用 CMake 编译（推荐）
 
-## Building
+```bash
+mkdir build
+cd build
+cmake ..
+make
+```
 
-In most cases, you need to rebuild OCCT on your platform (OS, compiler) before using it in your project to ensure binary compatibility.
+### 直接使用编译器
 
-Consult the file [dox/build/build_occt/building_occt.md](dox/build/build_occt/building_occt.md) or [Building OCCT](https://dev.opencascade.org/doc/overview/html/build_upgrade__building_occt.html) or [Building OCCT Wiki](https://github.com/Open-Cascade-SAS/OCCT/wiki/build_upgrade) for instructions on building OCCT from sources on supported platforms.
+```bash
+g++ -std=c++11 -O2 -Wall -o advancing_front_demo main.cpp AdvancingFront.cpp -lm
+```
 
-## Version
+### 运行演示
 
-The current version of OCCT can be found in the file [`adm/cmake/version.cmake`](adm/cmake/version.cmake).
+```bash
+./bin/advancing_front_demo  # CMake 编译方式
+# 或
+./advancing_front_demo      # 直接编译方式
+```
 
-## Development
+## 使用示例
 
-### Bug Tracker
-- [GitHub Issues](https://github.com/Open-Cascade-SAS/OCCT/issues)
-- [OCCT Tracker](https://tracker.dev.opencascade.org/)
+```cpp
+#include "AdvancingFront.h"
 
-For information regarding OCCT code development, please consult the official OCCT Collaborative Development Portal:
-- [OCCT Development Portal](http://dev.opencascade.org)
+// 创建算法实例
+AdvancingFront af(0.5);  // 网格尺寸为 0.5
 
-### Forum and Discussions
-- [OCCT Forums](https://dev.opencascade.org/forums)
-- [GitHub Discussions](https://github.com/Open-Cascade-SAS/OCCT/discussions)
+// 定义矩形边界
+std::vector<Point2D> boundary = {
+    Point2D(-2, -1.5),  // 左下
+    Point2D(2, -1.5),   // 右下
+    Point2D(2, 1.5),    // 右上
+    Point2D(-2, 1.5)    // 左上
+};
+
+// 设置边界
+af.setBoundary(boundary);
+
+// 生成网格
+if (af.generateMesh()) {
+    // 获取结果
+    const auto& points = af.getPoints();
+    const auto& triangles = af.getTriangles();
+    
+    // 输出网格信息
+    af.printMeshInfo();
+    
+    // 导出到文件
+    af.exportToFile("mesh.txt");
+}
+```
+
+## 参数调节
+
+### 网格尺寸
+```cpp
+af.setMeshSize(0.3);  // 更精细的网格
+```
+
+### 角度阈值
+```cpp
+af.setAngleThresholds(0.2, 3.0);  // 最小角度和最大角度
+```
+
+### 最大迭代次数
+```cpp
+af.setMaxIterations(5000);
+```
+
+## 输出格式
+
+生成的网格文件格式：
+
+```
+POINTS <点的数量>
+<x1> <y1>
+<x2> <y2>
+...
+
+TRIANGLES <三角形数量>
+<点索引1> <点索引2> <点索引3>
+<点索引1> <点索引2> <点索引3>
+...
+```
+
+## 算法性能
+
+- **时间复杂度**：O(n log n)，其中 n 是生成的三角形数量
+- **空间复杂度**：O(n)
+- **网格质量**：通过角度约束保证三角形质量
+
+## 应用场景
+
+- 有限元分析前处理
+- 计算流体力学网格生成
+- 计算几何研究
+- 图形学三角化应用
+
+## 算法优势
+
+1. **渐进式生成**：逐步生成网格，便于控制和调试
+2. **边界适应性强**：能够很好地适应复杂边界形状
+3. **质量可控**：通过参数调节控制网格质量
+4. **实现相对简单**：相比 Delaunay 三角化更容易理解和实现
+
+## 限制和改进方向
+
+### 当前限制
+- 仅支持简单多边形（无洞）
+- 网格密度控制相对简单
+- 对于非常尖锐的角度处理可能不够理想
+
+### 改进方向
+- 支持带洞的复杂域
+- 更精细的密度函数控制
+- 更好的质量优化算法
+- 并行化实现
+
+## 参考文献
+
+1. Löhner, R. (1996). *Progress in grid generation via the advancing front technique*
+2. Peraire, J., Vahdati, M., Morgan, K., & Zienkiewicz, O. C. (1987). *Adaptive remeshing for compressible flow computations*
+3. Lo, S. H. (1985). *A new mesh generation scheme for arbitrary planar domains*
+
+## 许可证
+
+本项目采用 MIT 许可证。详见 LICENSE 文件。
+
+## 作者
+
+实现了完整的二维前沿推进网格生成算法，包括核心数据结构、算法逻辑和演示程序。
+
+---
+
+如果您有任何问题或建议，欢迎提出 Issue 或 Pull Request！
