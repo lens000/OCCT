@@ -46,17 +46,20 @@
 - 核心算法实现类
 - 管理点集、三角形集合和前沿边队列
 - 提供网格生成的主要逻辑
+- 支持带洞域的复杂边界管理
 
 ## 主要特性
 
 - **自适应网格**：根据设定的网格尺寸生成合适的三角形
 - **质量控制**：通过角度阈值控制三角形质量
 - **边界适应**：支持任意多边形边界
+- **带洞域支持**：支持包含洞的复杂域网格生成
 - **几何形状支持**：
   - 矩形
   - 圆形
   - L形
   - 自定义多边形
+  - 带洞的复杂域（单个洞或多个洞）
 
 ## 编译和运行
 
@@ -90,6 +93,8 @@ g++ -std=c++11 -O2 -Wall -o advancing_front_demo main.cpp AdvancingFront.cpp -lm
 
 ## 使用示例
 
+### 基本用法（无洞域）
+
 ```cpp
 #include "AdvancingFront.h"
 
@@ -121,6 +126,60 @@ if (af.generateMesh()) {
 }
 ```
 
+### 带洞域的用法
+
+```cpp
+#include "AdvancingFront.h"
+
+// 创建算法实例
+AdvancingFront af(0.4);
+
+// 定义外边界（逆时针）
+std::vector<Point2D> outerBoundary = {
+    Point2D(-2, -1.5),  // 左下
+    Point2D(2, -1.5),   // 右下
+    Point2D(2, 1.5),    // 右上
+    Point2D(-2, 1.5)    // 左上
+};
+
+// 定义洞（顺时针）
+std::vector<Point2D> hole = {
+    Point2D(0.5, 0.5),   // 右上
+    Point2D(0.5, -0.5),  // 右下
+    Point2D(-0.5, -0.5), // 左下
+    Point2D(-0.5, 0.5)   // 左上
+};
+
+// 设置带洞的域
+std::vector<std::vector<Point2D>> holes = {hole};
+af.setBoundaryWithHoles(outerBoundary, holes);
+
+// 生成网格
+if (af.generateMesh()) {
+    af.printMeshInfo();
+    af.exportToFile("mesh_with_hole.txt");
+}
+```
+
+### 动态添加洞
+
+```cpp
+AdvancingFront af(0.4);
+
+// 设置外边界
+af.setBoundary(outerBoundary);
+
+// 动态添加洞
+af.addHole(hole1);
+af.addHole(hole2);
+
+// 重新初始化（使用所有边界）
+af.setBoundaryWithHoles(outerBoundary, {hole1, hole2});
+
+// 生成网格
+af.generateMesh();
+```
+
 ## 参数调节
 
 ### 网格尺寸
@@ -137,6 +196,36 @@ af.setAngleThresholds(0.2, 3.0);  // 最小角度和最大角度
 ```cpp
 af.setMaxIterations(5000);
 ```
+
+## API 参考
+
+### 边界设置方法
+
+```cpp
+// 设置简单边界（无洞）
+void setBoundary(const std::vector<Point2D>& boundaryPoints);
+
+// 设置带洞的复杂域
+void setBoundaryWithHoles(const std::vector<Point2D>& outerBoundary, 
+                          const std::vector<std::vector<Point2D>>& holes);
+
+// 添加单个洞
+void addHole(const std::vector<Point2D>& hole);
+```
+
+### 重要注意事项
+
+1. **边界方向**：
+   - 外边界：必须按逆时针方向排列
+   - 洞：必须按顺时针方向排列
+
+2. **点的顺序**：
+   - 边界点应该形成封闭的多边形
+   - 避免自相交或重复点
+
+3. **洞的位置**：
+   - 洞必须完全位于外边界内部
+   - 洞之间不能相交或重叠
 
 ## 输出格式
 
@@ -177,15 +266,16 @@ TRIANGLES <三角形数量>
 ## 限制和改进方向
 
 ### 当前限制
-- 仅支持简单多边形（无洞）
 - 网格密度控制相对简单
 - 对于非常尖锐的角度处理可能不够理想
+- 洞的数量过多时性能可能下降
 
 ### 改进方向
-- 支持带洞的复杂域
 - 更精细的密度函数控制
 - 更好的质量优化算法
 - 并行化实现
+- 自适应网格细化
+- 支持约束边
 
 ## 参考文献
 

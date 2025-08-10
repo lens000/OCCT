@@ -17,18 +17,31 @@ private:
     std::vector<Triangle> triangles;       // 生成的三角形
     std::list<Edge> front;                 // 当前前沿边列表
     
+    // 边界管理
+    std::vector<Point2D> outerBoundary;    // 外边界点
+    std::vector<std::vector<Point2D>> holes; // 洞的边界点列表
+    
     double meshSize;                       // 期望的网格尺寸
     double minAngleThreshold;              // 最小角度阈值
     double maxAngleThreshold;              // 最大角度阈值
     int maxIterations;                     // 最大迭代次数
+    int numBoundaryPoints;                  // 边界点总数
     
 public:
     // 构造函数
     AdvancingFront(double meshSize = 1.0, double minAngle = 0.3, double maxAngle = 2.8) 
-        : meshSize(meshSize), minAngleThreshold(minAngle), maxAngleThreshold(maxAngle), maxIterations(10000) {}
+        : meshSize(meshSize), minAngleThreshold(minAngle), maxAngleThreshold(maxAngle), 
+          maxIterations(10000), numBoundaryPoints(0) {}
     
     // 设置边界点（按逆时针顺序）
     void setBoundary(const std::vector<Point2D>& boundaryPoints);
+    
+    // 设置带洞的域（外边界逆时针，洞顺时针）
+    void setBoundaryWithHoles(const std::vector<Point2D>& outerBoundary, 
+                              const std::vector<std::vector<Point2D>>& holes);
+    
+    // 添加单个洞
+    void addHole(const std::vector<Point2D>& hole);
     
     // 生成网格
     bool generateMesh();
@@ -64,8 +77,11 @@ private:
     // 检查点是否可接受
     bool isPointAcceptable(const Point2D& point, const Edge& edge) const;
     
-    // 检查点是否在域内
+    // 检查点是否在域内（考虑洞）
     bool isPointInDomain(const Point2D& point) const;
+    
+    // 检查点是否在多边形内（射线法）
+    bool isPointInPolygon(const Point2D& point, const std::vector<Point2D>& polygon) const;
     
     // 检查点是否与现有点过近
     bool isPointTooClose(const Point2D& point) const;

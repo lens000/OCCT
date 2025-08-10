@@ -47,6 +47,75 @@ std::vector<Point2D> createLShapeBoundary(double width, double height, double th
     return boundary;
 }
 
+// 创建带圆形洞的矩形
+std::pair<std::vector<Point2D>, std::vector<Point2D>> createRectangleWithCircularHole(
+    double rectWidth, double rectHeight, double holeRadius, double holeCenterX = 0.0, double holeCenterY = 0.0) {
+    
+    // 外边界（矩形，逆时针）
+    std::vector<Point2D> outerBoundary = createRectangleBoundary(rectWidth, rectHeight);
+    
+    // 内边界（圆形洞，顺时针）
+    std::vector<Point2D> hole;
+    int numPoints = 16;
+    for (int i = 0; i < numPoints; ++i) {
+        double angle = -2.0 * M_PI * i / numPoints;  // 负角度表示顺时针
+        double x = holeCenterX + holeRadius * std::cos(angle);
+        double y = holeCenterY + holeRadius * std::sin(angle);
+        hole.push_back(Point2D(x, y));
+    }
+    
+    return std::make_pair(outerBoundary, hole);
+}
+
+// 创建带矩形洞的矩形
+std::pair<std::vector<Point2D>, std::vector<Point2D>> createRectangleWithRectangularHole(
+    double outerWidth, double outerHeight, double innerWidth, double innerHeight) {
+    
+    // 外边界（大矩形，逆时针）
+    std::vector<Point2D> outerBoundary = createRectangleBoundary(outerWidth, outerHeight);
+    
+    // 内边界（小矩形洞，顺时针）
+    std::vector<Point2D> hole;
+    double halfInnerWidth = innerWidth / 2.0;
+    double halfInnerHeight = innerHeight / 2.0;
+    
+    hole.push_back(Point2D(halfInnerWidth, halfInnerHeight));    // 右上
+    hole.push_back(Point2D(halfInnerWidth, -halfInnerHeight));   // 右下
+    hole.push_back(Point2D(-halfInnerWidth, -halfInnerHeight));  // 左下
+    hole.push_back(Point2D(-halfInnerWidth, halfInnerHeight));   // 左上
+    
+    return std::make_pair(outerBoundary, hole);
+}
+
+// 创建带多个洞的复杂域
+std::pair<std::vector<Point2D>, std::vector<std::vector<Point2D>>> createComplexDomainWithMultipleHoles() {
+    // 外边界（大矩形）
+    std::vector<Point2D> outerBoundary = createRectangleBoundary(6.0, 4.0);
+    
+    std::vector<std::vector<Point2D>> holes;
+    
+    // 第一个洞（圆形）
+    std::vector<Point2D> hole1;
+    int numPoints = 12;
+    for (int i = 0; i < numPoints; ++i) {
+        double angle = -2.0 * M_PI * i / numPoints;  // 顺时针
+        double x = -1.5 + 0.8 * std::cos(angle);
+        double y = 0.5 + 0.8 * std::sin(angle);
+        hole1.push_back(Point2D(x, y));
+    }
+    holes.push_back(hole1);
+    
+    // 第二个洞（小矩形）
+    std::vector<Point2D> hole2;
+    hole2.push_back(Point2D(1.5, 0.5));
+    hole2.push_back(Point2D(1.5, -0.5));
+    hole2.push_back(Point2D(0.5, -0.5));
+    hole2.push_back(Point2D(0.5, 0.5));
+    holes.push_back(hole2);
+    
+    return std::make_pair(outerBoundary, holes);
+}
+
 void testRectangleMesh() {
     std::cout << "\n=== Testing Rectangle Mesh ===" << std::endl;
     
@@ -129,6 +198,105 @@ void testCustomPolygon() {
     }
 }
 
+void testRectangleWithCircularHole() {
+    std::cout << "\n=== Testing Rectangle with Circular Hole ===" << std::endl;
+    
+    AdvancingFront af(0.4);
+    
+    // 创建4x3的矩形，中间有半径为0.8的圆形洞
+    auto boundaryAndHole = createRectangleWithCircularHole(4.0, 3.0, 0.8);
+    std::vector<Point2D> outerBoundary = boundaryAndHole.first;
+    std::vector<Point2D> hole = boundaryAndHole.second;
+    
+    std::vector<std::vector<Point2D>> holes = {hole};
+    af.setBoundaryWithHoles(outerBoundary, holes);
+    
+    std::cout << "Generating mesh for rectangle with circular hole..." << std::endl;
+    if (af.generateMesh()) {
+        af.printMeshInfo();
+        af.exportToFile("rectangle_circular_hole_mesh.txt");
+    } else {
+        std::cout << "Failed to generate mesh with circular hole!" << std::endl;
+    }
+}
+
+void testRectangleWithRectangularHole() {
+    std::cout << "\n=== Testing Rectangle with Rectangular Hole ===" << std::endl;
+    
+    AdvancingFront af(0.3);
+    
+    // 创建4x3的矩形，中间有2x1.5的矩形洞
+    auto boundaryAndHole = createRectangleWithRectangularHole(4.0, 3.0, 2.0, 1.5);
+    std::vector<Point2D> outerBoundary = boundaryAndHole.first;
+    std::vector<Point2D> hole = boundaryAndHole.second;
+    
+    std::vector<std::vector<Point2D>> holes = {hole};
+    af.setBoundaryWithHoles(outerBoundary, holes);
+    
+    std::cout << "Generating mesh for rectangle with rectangular hole..." << std::endl;
+    if (af.generateMesh()) {
+        af.printMeshInfo();
+        af.exportToFile("rectangle_rectangular_hole_mesh.txt");
+    } else {
+        std::cout << "Failed to generate mesh with rectangular hole!" << std::endl;
+    }
+}
+
+void testComplexDomainWithMultipleHoles() {
+    std::cout << "\n=== Testing Complex Domain with Multiple Holes ===" << std::endl;
+    
+    AdvancingFront af(0.35);
+    
+    // 创建复杂域，包含多个洞
+    auto boundaryAndHoles = createComplexDomainWithMultipleHoles();
+    std::vector<Point2D> outerBoundary = boundaryAndHoles.first;
+    std::vector<std::vector<Point2D>> holes = boundaryAndHoles.second;
+    
+    af.setBoundaryWithHoles(outerBoundary, holes);
+    
+    std::cout << "Generating mesh for complex domain with multiple holes..." << std::endl;
+    if (af.generateMesh()) {
+        af.printMeshInfo();
+        af.exportToFile("complex_multiple_holes_mesh.txt");
+    } else {
+        std::cout << "Failed to generate mesh for complex domain!" << std::endl;
+    }
+}
+
+void testAddHoleFeature() {
+    std::cout << "\n=== Testing Add Hole Feature ===" << std::endl;
+    
+    AdvancingFront af(0.4);
+    
+    // 首先设置外边界
+    std::vector<Point2D> outerBoundary = createRectangleBoundary(5.0, 3.0);
+    af.setBoundary(outerBoundary);
+    
+    // 然后添加洞
+    auto boundaryAndHole1 = createRectangleWithCircularHole(1.0, 1.0, 0.4);  // 圆形洞
+    std::vector<Point2D> hole1 = boundaryAndHole1.second;
+    af.addHole(hole1);
+    
+    // 添加另一个洞
+    std::vector<Point2D> hole2;
+    hole2.push_back(Point2D(1.5, 0.5));
+    hole2.push_back(Point2D(1.5, -0.5));
+    hole2.push_back(Point2D(0.8, -0.5));
+    hole2.push_back(Point2D(0.8, 0.5));
+    af.addHole(hole2);
+    
+    // 重新初始化前沿边
+    af.setBoundaryWithHoles(outerBoundary, {hole1, hole2});
+    
+    std::cout << "Generating mesh using addHole feature..." << std::endl;
+    if (af.generateMesh()) {
+        af.printMeshInfo();
+        af.exportToFile("add_hole_feature_mesh.txt");
+    } else {
+        std::cout << "Failed to generate mesh using addHole feature!" << std::endl;
+    }
+}
+
 void demonstrateParameters() {
     std::cout << "\n=== Demonstrating Parameter Effects ===" << std::endl;
     
@@ -168,6 +336,12 @@ int main() {
         
         // 测试自定义多边形
         testCustomPolygon();
+        
+        // 测试带洞的域
+        testRectangleWithCircularHole();
+        testRectangleWithRectangularHole();
+        testComplexDomainWithMultipleHoles();
+        testAddHoleFeature();
         
         // 演示参数效果
         demonstrateParameters();

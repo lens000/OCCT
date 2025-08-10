@@ -6,6 +6,11 @@ void AdvancingFront::setBoundary(const std::vector<Point2D>& boundaryPoints) {
     points.clear();
     triangles.clear();
     front.clear();
+    holes.clear();
+    
+    // 设置外边界
+    outerBoundary = boundaryPoints;
+    numBoundaryPoints = boundaryPoints.size();
     
     // 添加边界点
     for (const auto& point : boundaryPoints) {
@@ -17,14 +22,77 @@ void AdvancingFront::setBoundary(const std::vector<Point2D>& boundaryPoints) {
     initializeFront();
 }
 
+void AdvancingFront::setBoundaryWithHoles(const std::vector<Point2D>& outerBoundaryPoints, 
+                                           const std::vector<std::vector<Point2D>>& holesList) {
+    points.clear();
+    triangles.clear();
+    front.clear();
+    
+    // 设置外边界
+    outerBoundary = outerBoundaryPoints;
+    holes = holesList;
+    
+    // 计算总边界点数
+    numBoundaryPoints = outerBoundaryPoints.size();
+    for (const auto& hole : holes) {
+        numBoundaryPoints += hole.size();
+    }
+    
+    // 添加外边界点
+    for (const auto& point : outerBoundaryPoints) {
+        points.push_back(point);
+        points.back().id = points.size() - 1;
+    }
+    
+    // 添加洞的边界点
+    for (const auto& hole : holes) {
+        for (const auto& point : hole) {
+            points.push_back(point);
+            points.back().id = points.size() - 1;
+        }
+    }
+    
+    // 初始化前沿边
+    initializeFront();
+}
+
+void AdvancingFront::addHole(const std::vector<Point2D>& hole) {
+    if (hole.size() < 3) {
+        std::cerr << "Warning: Hole must have at least 3 points" << std::endl;
+        return;
+    }
+    
+    holes.push_back(hole);
+    numBoundaryPoints += hole.size();
+    
+    // 添加洞的边界点到点集合
+    for (const auto& point : hole) {
+        points.push_back(point);
+        points.back().id = points.size() - 1;
+    }
+}
+
 void AdvancingFront::initializeFront() {
     front.clear();
     
-    // 创建边界的前沿边
-    for (size_t i = 0; i < points.size(); ++i) {
-        size_t next = (i + 1) % points.size();
+    // 创建外边界的前沿边（逆时针）
+    for (size_t i = 0; i < outerBoundary.size(); ++i) {
+        size_t next = (i + 1) % outerBoundary.size();
         Edge edge(&points[i], &points[next]);
         front.push_back(edge);
+    }
+    
+    // 创建洞边界的前沿边（顺时针，内向外）
+    size_t pointOffset = outerBoundary.size();
+    for (const auto& hole : holes) {
+        for (size_t i = 0; i < hole.size(); ++i) {
+            size_t current = pointOffset + i;
+            size_t next = pointOffset + (i + 1) % hole.size();
+            // 注意：洞的边界应该是顺时针的，这样前沿边指向域内部
+            Edge edge(&points[next], &points[current]);  // 反向创建边
+            front.push_back(edge);
+        }
+        pointOffset += hole.size();
     }
 }
 
@@ -154,17 +222,36 @@ bool AdvancingFront::isPointAcceptable(const Point2D& point, const Edge& edge) c
 }
 
 bool AdvancingFront::isPointInDomain(const Point2D& point) const {
+    // 检查点是否在外边界内
+    bool inOuter = isPointInPolygon(point, outerBoundary);
+    if (!inOuter) {
+        return false;  // 不在外边界内
+    }
+    
+    // 检查点是否在任何洞内
+    for (const auto& hole : holes) {
+        if (isPointInPolygon(point, hole)) {
+            return false;  // 在洞内，不在有效域内
+        }
+    }
+    
+    return true;  // 在外边界内且不在任何洞内
+}
+
+bool AdvancingFront::isPointInPolygon(const Point2D& point, const std::vector<Point2D>& polygon) const {
+    if (polygon.size() < 3) return false;
+    
     // 使用射线法检查点是否在多边形内
     int intersections = 0;
     Point2D rayEnd(point.x + 1000.0, point.y);  // 水平射线
     
-    for (size_t i = 0; i < points.size(); ++i) {
-        size_t next = (i + 1) % points.size();
+    for (size_t i = 0; i < polygon.size(); ++i) {
+        size_t next = (i + 1) % polygon.size();
         
-        const Point2D& p1 = points[i];
-        const Point2D& p2 = points[next];
+        const Point2D& p1 = polygon[i];
+        const Point2D& p2 = polygon[next];
         
-        // 检查射线与边界边的交点
+        // 检查射线与边的交点
         if (((p1.y > point.y) != (p2.y > point.y)) &&
             (point.x < (p2.x - p1.x) * (point.y - p1.y) / (p2.y - p1.y) + p1.x)) {
             intersections++;
