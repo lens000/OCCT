@@ -1,0 +1,5 @@
+/workspace/tbb_file_io_example/build/CMakeFiles/tbb_file_io_example.dir
+/workspace/tbb_file_io_example/build/CMakeFiles/performance_test.dir
+/workspace/tbb_file_io_example/build/CMakeFiles/simple_tbb_test.dir
+/workspace/tbb_file_io_example/build/CMakeFiles/edit_cache.dir
+/workspace/tbb_file_io_example/build/CMakeFiles/rebuild_cache.dir
