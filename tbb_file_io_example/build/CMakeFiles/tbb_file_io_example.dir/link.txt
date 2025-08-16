@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -Wl,-rpath, -Xlinker --dependency-file=CMakeFiles/tbb_file_io_example.dir/link.d CMakeFiles/tbb_file_io_example.dir/tbb_file_io_example.cpp.o -o tbb_file_io_example  /usr/lib/x86_64-linux-gnu/libtbb.so.12.14

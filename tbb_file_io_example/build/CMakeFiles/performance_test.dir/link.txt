@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -Wl,-rpath, -Xlinker --dependency-file=CMakeFiles/performance_test.dir/link.d CMakeFiles/performance_test.dir/performance_test.cpp.o -o performance_test  /usr/lib/x86_64-linux-gnu/libtbb.so.12.14
