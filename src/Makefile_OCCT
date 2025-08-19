@@ -1,0 +1,49 @@
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2
+TARGET = OCCTPointOnLine
+SOURCE = OCCTPointOnLine.cpp
+
+# OCCT库路径 - 使用相对路径
+OCCT_INC = -I. -IFoundationClasses/TKernel -IFoundationClasses/TKMath
+OCCT_LIB = -LFoundationClasses/TKMath -lTKMath -LFoundationClasses/TKernel -lTKernel
+
+# 如果系统安装了OCCT，也可以使用系统路径
+# OCCT_INC = -I/usr/include/opencascade
+# OCCT_LIB = -L/usr/lib/x86_64-linux-gnu -lTKernel -lTKMath
+
+all: $(TARGET)
+
+$(TARGET): $(SOURCE)
+	$(CXX) $(CXXFLAGS) $(OCCT_INC) -o $(TARGET) $(SOURCE) $(OCCT_LIB)
+
+clean:
+	rm -f $(TARGET)
+
+run: $(TARGET)
+	./$(TARGET)
+
+# 检查OCCT头文件
+check_occt:
+	@echo "检查OCCT头文件..."
+	@if [ -f "FoundationClasses/TKMath/gp/gp_Pnt.hxx" ]; then \
+		echo "✓ 找到 gp_Pnt.hxx"; \
+	else \
+		echo "✗ 未找到 gp_Pnt.hxx"; \
+	fi
+	@if [ -f "FoundationClasses/TKMath/gp/gp_Lin.hxx" ]; then \
+		echo "✓ 找到 gp_Lin.hxx"; \
+	else \
+		echo "✗ 未找到 gp_Lin.hxx"; \
+	fi
+	@if [ -f "FoundationClasses/TKMath/gp/gp_Dir.hxx" ]; then \
+		echo "✓ 找到 gp_Dir.hxx"; \
+	else \
+		echo "✗ 未找到 gp_Dir.hxx"; \
+	fi
+	@if [ -f "FoundationClasses/TKMath/gp/gp_Vec.hxx" ]; then \
+		echo "✓ 找到 gp_Vec.hxx"; \
+	else \
+		echo "✗ 未找到 gp_Vec.hxx"; \
+	fi
+
+.PHONY: all clean run check_occt

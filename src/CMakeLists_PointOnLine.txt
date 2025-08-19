@@ -1,0 +1,28 @@
+cmake_minimum_required(VERSION 3.10)
+project(PointOnLineParam)
+
+# 设置C++标准
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 查找必要的包
+find_package(PkgConfig REQUIRED)
+
+# 添加可执行文件
+add_executable(PointOnLineParam PointOnLineParam.cpp)
+
+# 设置编译选项
+target_compile_options(PointOnLineParam PRIVATE -Wall -Wextra)
+
+# 链接数学库
+target_link_libraries(PointOnLineParam m)
+
+# 设置输出目录
+set_target_properties(PointOnLineParam PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
+# 安装规则
+install(TARGETS PointOnLineParam
+    RUNTIME DESTINATION bin
+)
