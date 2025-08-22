@@ -1,0 +1,39 @@
+cmake_minimum_required(VERSION 3.10)
+project(WireFromEdgesExample)
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find OpenCASCADE package
+find_package(OpenCASCADE REQUIRED)
+
+# Add executable
+add_executable(wire_example wire_from_edges_example.cpp)
+
+# Link OCCT libraries
+target_link_libraries(wire_example 
+    TKernel 
+    TKMath 
+    TKBRep 
+    TKTopAlgo
+    TKG3d
+    TKGeomBase
+    TKGeomAlgo
+)
+
+# Include OCCT headers
+target_include_directories(wire_example PRIVATE ${OpenCASCADE_INCLUDE_DIR})
+
+# Set compiler flags for better debugging
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(wire_example PRIVATE -g -O0)
+endif()
+
+# Print information
+message(STATUS "OpenCASCADE found: ${OpenCASCADE_FOUND}")
+message(STATUS "OpenCASCADE include dir: ${OpenCASCADE_INCLUDE_DIR}")
+message(STATUS "OpenCASCADE libraries: ${OpenCASCADE_LIBRARIES}")
+
+# Installation
+install(TARGETS wire_example DESTINATION bin)
