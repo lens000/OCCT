@@ -1,0 +1,91 @@
+cmake_minimum_required(VERSION 3.10)
+project(MultiLoopWireExample)
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find OpenCASCADE package
+find_package(OpenCASCADE REQUIRED)
+
+# Include directories
+include_directories(${OpenCASCADE_INCLUDE_DIR})
+
+# Define source files
+set(MULTI_LOOP_SOURCES
+    MultiLoopWireBuilder.cpp
+    MultiLoopWireBuilder.h
+)
+
+# Create library for MultiLoopWireBuilder
+add_library(MultiLoopWireBuilder STATIC ${MULTI_LOOP_SOURCES})
+target_link_libraries(MultiLoopWireBuilder 
+    TKernel 
+    TKMath 
+    TKBRep 
+    TKTopAlgo
+    TKShHealing
+    TKG3d
+    TKGeomBase
+    TKGeomAlgo
+)
+
+# Test executable
+add_executable(test_multi_loop_wires test_multi_loop_wires.cpp)
+target_link_libraries(test_multi_loop_wires MultiLoopWireBuilder)
+
+# Comprehensive example executable
+add_executable(multi_loop_example multi_loop_wire_example.cpp)
+target_link_libraries(multi_loop_example 
+    TKernel 
+    TKMath 
+    TKBRep 
+    TKTopAlgo
+    TKShHealing
+    TKG3d
+    TKGeomBase
+    TKGeomAlgo
+)
+
+# Edge sorting utility executable
+add_executable(edge_sorting_utility edge_sorting_utility.cpp)
+target_link_libraries(edge_sorting_utility 
+    TKernel 
+    TKMath 
+    TKBRep 
+    TKTopAlgo
+    TKShHealing
+    TKG3d
+    TKGeomBase
+    TKGeomAlgo
+)
+
+# Set compiler flags
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(MultiLoopWireBuilder PRIVATE -g -O0 -Wall)
+    target_compile_options(test_multi_loop_wires PRIVATE -g -O0 -Wall)
+    target_compile_options(multi_loop_example PRIVATE -g -O0 -Wall)
+    target_compile_options(edge_sorting_utility PRIVATE -g -O0 -Wall)
+endif()
+
+# Installation
+install(TARGETS test_multi_loop_wires multi_loop_example edge_sorting_utility DESTINATION bin)
+install(FILES MultiLoopWireBuilder.h DESTINATION include)
+
+# Print configuration information
+message(STATUS "OpenCASCADE found: ${OpenCASCADE_FOUND}")
+message(STATUS "OpenCASCADE include dir: ${OpenCASCADE_INCLUDE_DIR}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+# Add custom target for running tests
+add_custom_target(run_tests
+    COMMAND test_multi_loop_wires
+    DEPENDS test_multi_loop_wires
+    COMMENT "Running multi-loop wire tests"
+)
+
+# Add custom target for building all examples
+add_custom_target(build_all_examples
+    DEPENDS test_multi_loop_wires multi_loop_example edge_sorting_utility
+    COMMENT "Building all multi-loop wire examples"
+)
