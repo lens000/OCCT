@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.16 FATAL_ERROR)
 
 # Define OCCT root directory as a cache variable - works for both standalone and subproject builds
 set(OCCT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "Root directory of OCCT project" FORCE)
