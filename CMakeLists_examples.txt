@@ -1,0 +1,38 @@
+cmake_minimum_required(VERSION 3.16)
+project(OCCT_Edge_To_Wire_Examples)
+
+# 设置C++标准
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 查找OCCT包
+find_package(OpenCASCADE REQUIRED)
+
+# 设置包含目录
+include_directories(${OpenCASCADE_INCLUDE_DIR})
+
+# 基础版本的程序
+add_executable(edge_to_wire_example edge_to_wire_example.cpp)
+target_link_libraries(edge_to_wire_example ${OpenCASCADE_LIBRARIES})
+
+# 高级版本的程序
+add_executable(advanced_edge_to_wire advanced_edge_to_wire.cpp)
+target_link_libraries(advanced_edge_to_wire ${OpenCASCADE_LIBRARIES})
+
+# 设置编译选项
+if(MSVC)
+    target_compile_options(edge_to_wire_example PRIVATE /W4)
+    target_compile_options(advanced_edge_to_wire PRIVATE /W4)
+else()
+    target_compile_options(edge_to_wire_example PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(advanced_edge_to_wire PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# 安装目标
+install(TARGETS edge_to_wire_example advanced_edge_to_wire
+        RUNTIME DESTINATION bin)
+
+# 打印OCCT信息
+message(STATUS "OCCT Version: ${OpenCASCADE_VERSION}")
+message(STATUS "OCCT Include Dir: ${OpenCASCADE_INCLUDE_DIR}")
+message(STATUS "OCCT Libraries: ${OpenCASCADE_LIBRARIES}")
