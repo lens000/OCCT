@@ -1,64 +1,136 @@
-# Open CASCADE Technology
+# OpenCascade曲线偏移延伸示例
 
-Open CASCADE Technology (OCCT) is a software development platform providing services for 3D surface and solid modeling, CAD data exchange, and visualization. Most of OCCT functionality is available in the form of C++ libraries. OCCT is ideal for developing software dealing with 3D modeling (CAD), manufacturing/measuring (CAM), or numerical simulation (CAE).
+这个项目演示了如何在OpenCascade中实现曲线偏移时的延伸功能。
 
-## License
+## 功能特性
 
-Open CASCADE Technology is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License version 2.1 as published by the Free Software Foundation, with a special exception defined in the file `OCCT_LGPL_EXCEPTION.txt`. Consult the file `LICENSE_LGPL_21.txt` included in the OCCT distribution for the complete text of the license.
+本示例提供了多种方法来实现曲线偏移时的延伸：
 
-Alternatively, Open CASCADE Technology may be used under the terms of the Open CASCADE commercial license or a contractual agreement.
+### 1. 使用GeomLib::ExtendCurveToPoint延伸曲线
+- 支持G1、G2、G3连续性
+- 可以向前或向后延伸
+- 适用于有界曲线
 
-**Note:** Open CASCADE Technology is provided on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND. The entire risk related to any use of the OCCT code and materials is on you. See the license text for a formal disclaimer.
+### 2. 创建偏移曲线并延伸
+- 先创建偏移曲线
+- 然后使用切线方向计算延伸点
+- 自动处理延伸逻辑
 
-## Packaging
+### 3. 拓扑偏移（Wire）处理
+- 使用BRepOffsetAPI_MakeOffset进行拓扑偏移
+- 支持复杂的Wire结构
+- 为后续延伸操作提供基础
 
-You can receive certified versions of OCCT code in different packages:
+### 4. 自定义偏移延伸算法
+- 结合偏移和延伸的完整流程
+- 转换为B样条曲线以获得更好的控制
+- 支持参数化延伸
 
-- **Snapshot of Git repository:** Contains C++ header and source files of OCCT, documentation sources, build scripts, and CMake project files.
-- **Complete source archive:** Contains all sources of OCCT, generated HTML and PDF documentation, and ready-to-use projects for building on all officially supported platforms.
-- **Binary package (platform-specific):** In addition to the complete source archive, it includes binaries of OCCT and third-party libraries built on one platform. This package allows using OCCT immediately after installation.
+## 编译要求
 
-Certified versions of OCCT can be downloaded from:
-- [Open CASCADE Releases](https://dev.opencascade.org/release)
-- [GitHub Releases](https://github.com/Open-Cascade-SAS/OCCT/releases)
+- OpenCascade 7.0.0 或更高版本
+- C++17 兼容的编译器
+- CMake 3.16 或更高版本
 
-You can also find OCCT pre-installed on your system or install it from packages provided by a third party. Note that packaging and functionality of such versions can be different from certified releases. Please consult the documentation accompanying your version for details.
+## 编译步骤
 
-## Documentation
+### Linux/macOS
+```bash
+mkdir build
+cd build
+cmake ..
+make
+```
 
-Documentation is available at the following links:
-- [Latest version](https://dev.opencascade.org/doc/overview)
-- [Version 7.8](https://dev.opencascade.org/doc/occt-7.8.0/overview)
+### Windows (Visual Studio)
+```bash
+mkdir build
+cd build
+cmake .. -G "Visual Studio 16 2019" -A x64
+cmake --build . --config Release
+```
 
-Documentation can be part of the package. To preview documentation as part of the package, open the file `doc/html/index.html` to browse HTML documentation.
+## 使用方法
 
-If HTML documentation is not available in your package, you can:
+编译完成后，运行可执行文件：
 
-- **Generate it from sources:** You need to have Tcl and Doxygen 1.8.4 (or above) installed on your system and accessible in your environment (check the environment variable PATH). Use the batch file `adm/gendoc.bat` on Windows or the Bash script `adm/gendoc` on Linux or OS X to (re)generate documentation.
-- **Generate together with sources:** You need to have CMake and 1.8.4 (or above) installed on your system. Enable `BUILD_DOC_Overview` CMake parameter and set the path to Doxygen `3RDPARTY_DOXYGEN_EXECUTABLE`. Then build ALL or only `Overview`.
-- **Read documentation in source plain text (Markdown) format** found in the subfolder `dox` or [GitHub Wiki](https://github.com/Open-Cascade-SAS/OCCT/wiki).
+```bash
+./offset_curve_extend_example
+```
 
-See [dox/build/build_documentation/building_documentation.md](dox/build/build_documentation/building_documentation.md) or [Building Documentation](https://dev.opencascade.org/doc/occt-7.8.0/overview/html/build_upgrade__building_documentation.html) for details.
+程序将演示：
+1. 创建基础圆曲线
+2. 使用GeomLib::ExtendCurveToPoint延伸曲线
+3. 创建偏移曲线并延伸
+4. 创建自定义偏移延伸
+5. 创建拓扑偏移
 
-## Building
+## 关键API说明
 
-In most cases, you need to rebuild OCCT on your platform (OS, compiler) before using it in your project to ensure binary compatibility.
+### GeomLib::ExtendCurveToPoint
+```cpp
+void GeomLib::ExtendCurveToPoint(
+    Handle(Geom_BoundedCurve)& Curve,
+    const gp_Pnt& Point,
+    const Standard_Integer Continuity,  // 1=G1, 2=G2, 3=G3
+    const Standard_Boolean After       // true=向后延伸, false=向前延伸
+);
+```
 
-Consult the file [dox/build/build_occt/building_occt.md](dox/build/build_occt/building_occt.md) or [Building OCCT](https://dev.opencascade.org/doc/overview/html/build_upgrade__building_occt.html) or [Building OCCT Wiki](https://github.com/Open-Cascade-SAS/OCCT/wiki/build_upgrade) for instructions on building OCCT from sources on supported platforms.
+### Geom_OffsetCurve
+```cpp
+Handle(Geom_OffsetCurve) anOffsetCurve = new Geom_OffsetCurve(
+    theBaseCurve,    // 基础曲线
+    theOffset,       // 偏移距离
+    theDirection     // 偏移方向
+);
+```
 
-## Version
+### BRepOffsetAPI_MakeOffset
+```cpp
+BRepOffsetAPI_MakeOffset anAlgo(theWire);
+anAlgo.Perform(offsetDistance, altitude);
+TopoDS_Shape result = anAlgo.Shape();
+```
 
-The current version of OCCT can be found in the file [`adm/cmake/version.cmake`](adm/cmake/version.cmake).
+## 注意事项
 
-## Development
+1. **曲线类型限制**：GeomLib::ExtendCurveToPoint只适用于有界曲线
+2. **连续性要求**：延伸操作需要曲线在端点处有足够的导数信息
+3. **偏移方向**：偏移曲线的方向必须与基础曲线的切线不平行
+4. **拓扑复杂性**：对于复杂的Wire结构，延伸操作可能需要额外的处理逻辑
 
-### Bug Tracker
-- [GitHub Issues](https://github.com/Open-Cascade-SAS/OCCT/issues)
-- [OCCT Tracker](https://tracker.dev.opencascade.org/)
+## 扩展应用
 
-For information regarding OCCT code development, please consult the official OCCT Collaborative Development Portal:
-- [OCCT Development Portal](http://dev.opencascade.org)
+这个示例可以扩展用于：
+- 机械设计中的轮廓偏移
+- 建筑CAD中的墙体偏移
+- 路径规划中的安全边界计算
+- 3D建模中的表面偏移
 
-### Forum and Discussions
-- [OCCT Forums](https://dev.opencascade.org/forums)
-- [GitHub Discussions](https://github.com/Open-Cascade-SAS/OCCT/discussions)
+## 故障排除
+
+### 常见问题
+
+1. **编译错误：找不到OpenCascade头文件**
+   - 确保OpenCascade已正确安装
+   - 设置OpenCascade_ROOT环境变量
+   - 检查CMakeLists.txt中的路径设置
+
+2. **运行时错误：曲线延伸失败**
+   - 检查曲线是否为有界曲线
+   - 验证目标点是否合理
+   - 确保连续性要求满足
+
+3. **偏移操作失败**
+   - 检查偏移距离是否合理
+   - 验证偏移方向是否有效
+   - 确保基础曲线几何有效
+
+## 许可证
+
+本项目遵循OpenCascade的LGPL 2.1许可证。
+
+## 贡献
+
+欢迎提交Issue和Pull Request来改进这个示例。
